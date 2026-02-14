@@ -7,6 +7,7 @@ import Result from "./pages/Result";
 import History from "./pages/History";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import Layout from "./components/Layout";
 
 function App() {
   return (
@@ -20,7 +21,10 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
+             <Layout>
+
               <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -29,7 +33,9 @@ function App() {
           path="/health-form"
           element={
             <ProtectedRoute>
+              <Layout>
               <HealthForm />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -47,7 +53,9 @@ function App() {
           path="/history"
           element={
             <ProtectedRoute>
+              <Layout>
               <History />
+              </Layout>
             </ProtectedRoute>
           }
         />
