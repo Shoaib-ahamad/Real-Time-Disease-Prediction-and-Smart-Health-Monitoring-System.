@@ -16,10 +16,10 @@ const HealthForm = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -28,66 +28,93 @@ const HealthForm = () => {
     setLoading(true);
 
     try {
+      // Clean and process symptoms properly
+      const symptomsArray = formData.symptoms
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s !== "");
+
       const response = await API.post("/predict/symptoms", {
-        ...formData,
-        symptoms: formData.symptoms.split(","),
+        age: Number(formData.age),
+        temperature: Number(formData.temperature),
+        bp: formData.bp,
+        symptoms: symptomsArray,
       });
 
+      // Navigate to result page with backend response
       navigate("/result", { state: response.data });
-    } catch (err) {
-      setError("Prediction failed");
-    }
 
-    setLoading(false);
+    } catch (err) {
+      console.error("Prediction Error:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.message || "Prediction failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div>
-      <h2>Health Form</h2>
+    <div style={{ maxWidth: "400px", margin: "40px auto" }}>
+      <h2>Health Prediction Form</h2>
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="number"
-          name="age"
-          placeholder="Age"
-          value={formData.age}
-          onChange={handleChange}
-          required
-        />
 
-        <input
-          type="number"
-          name="temperature"
-          placeholder="Temperature"
-          value={formData.temperature}
-          onChange={handleChange}
-          required
-        />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="number"
+            name="age"
+            placeholder="Age"
+            value={formData.age}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <input
-          type="text"
-          name="bp"
-          placeholder="Blood Pressure (e.g. 120/80)"
-          value={formData.bp}
-          onChange={handleChange}
-          required
-        />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="number"
+            name="temperature"
+            placeholder="Temperature (°F)"
+            value={formData.temperature}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <input
-          type="text"
-          name="symptoms"
-          placeholder="Symptoms (comma separated)"
-          value={formData.symptoms}
-          onChange={handleChange}
-          required
-        />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="text"
+            name="bp"
+            placeholder="Blood Pressure (e.g. 120/80)"
+            value={formData.bp}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="text"
+            name="symptoms"
+            placeholder="Symptoms (comma separated)"
+            value={formData.symptoms}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
         <button type="submit" disabled={loading}>
           {loading ? "Analyzing..." : "Submit"}
         </button>
+
       </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "red", marginTop: "10px" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 };
