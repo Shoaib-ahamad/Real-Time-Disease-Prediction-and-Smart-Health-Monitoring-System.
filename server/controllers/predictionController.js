@@ -1,27 +1,35 @@
 const HealthRecord = require("../models/HealthRecord");
+const axios = require("axios");
 
-// Dummy prediction logic (temporary)
 exports.predictSymptoms = async (req, res) => {
   try {
-    const { age, temperature, bp, symptoms } = req.body;
+    const { features } = req.body;
 
-    // Basic validation
-    if (!age || !temperature || !bp || !symptoms) {
-      return res.status(400).json({ message: "All fields required" });
+    // Validate
+    if (!features || !Array.isArray(features) || features.length !== 25) {
+      return res.status(400).json({
+        message: "Exactly 25 normalized features are required",
+      });
     }
 
-    // Dummy logic (we replace with ML later)
-    let prediction = "Common Flu";
-    let risk = temperature > 102 ? "High" : "Moderate";
-    let probability = temperature > 102 ? 0.85 : 0.65;
+    // Call ML API
+    const mlResponse = await axios.post(
+      "https://health-api-oo87.onrender.com/predict",
+      { features }
+    );
+
+    const { prediction, probability } = mlResponse.data;
+
+    // Risk logic based on probability
+    const risk =
+      probability > 0.8 ? "High" :
+      probability > 0.5 ? "Moderate" :
+      "Low";
 
     // Save to DB
     const record = await HealthRecord.create({
       user: req.user._id,
-      age,
-      temperature,
-      bp,
-      symptoms,
+      features,
       prediction,
       risk,
       probability,
@@ -34,18 +42,7 @@ exports.predictSymptoms = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-// Get user prediction history
-exports.getHistory = async (req, res) => {
-  try {
-    const records = await HealthRecord.find({ user: req.user._id })
-      .sort({ createdAt: -1 });
-
-    res.json(records);
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("ML Prediction Error:", error.message);
+    res.status(500).json({ message: "Prediction failed" });
   }
 };
