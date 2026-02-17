@@ -35,6 +35,10 @@ const healthRecordSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    features: {
+  type: [Number],
+  required: true
+},
   },
   { timestamps: true }
 );
