@@ -72,4 +72,3 @@ The API expects a JSON object with a key named `symptoms` containing a list of s
 {
   "symptoms": ["itching", "skin_rash", "fatigue"]
 }
-clone my repo: https://github.com/QuantumCoder-001/symptons
