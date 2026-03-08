@@ -6,9 +6,15 @@ const HealthRecordSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  // New field to distinguish the source of the prediction
+  predictionType: {
+    type: String,
+    enum: ["symptoms", "blood_report"],
+    default: "symptoms",
+  },
+  // Symptoms is no longer required globally since reports don't use it
   symptoms: [{
     type: String,
-    required: true,
   }],
   age: {
     type: Number,
@@ -18,6 +24,11 @@ const HealthRecordSchema = new mongoose.Schema({
   },
   bp: {
     type: String,
+  },
+  // New field to store the 24 blood parameters
+  reportData: {
+    type: Map,
+    of: Number,
   },
   predictions: [{
     disease: String,

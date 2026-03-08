@@ -1,487 +1,114 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import API from "../services/api";
 
 const Result = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { predictions, symptoms, reportData, predictionType, userData } = location.state || {};
 
-  const { predictions, symptoms, userData } = location.state || { 
-    predictions: [], 
-    symptoms: [],
-    userData: null 
-  };
-
-  if (!predictions || predictions.length === 0) {
+  if (!predictions) {
     return (
-      <div style={styles.container}>
-        <div style={styles.errorCard}>
-          <h2 style={styles.errorTitle}>No Prediction Available</h2>
-          <p style={styles.errorMessage}>
-            We couldn't find any prediction data. Please try submitting the form again.
-          </p>
-          <button 
-            onClick={() => navigate("/health-form")} 
-            style={styles.primaryButton}
-          >
-            Go to Health Form
-          </button>
-        </div>
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <h2>No prediction data found.</h2>
+        <button onClick={() => navigate("/health-form")}>Go Back</button>
       </div>
     );
   }
 
-  /*const handleSaveToHistory = async () => {
-    setSaving(true);
-    try {
-      await API.post("/ml-model/symptons", {
-        symptoms,
-        predictions,
-        userData,
-        date: new Date().toISOString()
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
-      console.error("Failed to save to history:", error);
-    } finally {
-      setSaving(false);
-    }
-  };*/
-
-  const handleSaveToHistory = async () => {
-  setSaving(true);
-  try {
-    // Prepare the data in the format your backend expects
-    const saveData = {
-      symptoms: symptoms,
-      age: userData?.age,
-      temperature: userData?.temperature,
-      bp: userData?.bp,
-      predictions: predictions.map(p => ({
-        disease: p.disease,
-        confidence: p.confidence,
-        confidence_level: p.confidence_level || 
-          (parseFloat(p.confidence) >= 70 ? "High" : 
-           parseFloat(p.confidence) >= 40 ? "Medium" : "Low")
-      }))
-    };
-
-    console.log('📤 Saving to history:', saveData);
-    console.log('📍 Using API base URL:', API.defaults.baseURL);
-
-    // Make sure we're using the full URL with /api prefix
-    const response = await API.post('/predict/symptoms', saveData);
-    
-    console.log('✅ Save response:', response.data);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  } catch (error) {
-    console.error("❌ Failed to save to history:", error);
-    if (error.response) {
-      console.error('Server response:', error.response.data);
-      console.error('Status:', error.response.status);
-      console.error('URL that was called:', error.config?.url);
-      console.error('Full URL:', error.config?.baseURL + error.config?.url);
-      alert(error.response.data.message || "Failed to save to history");
-    } else if (error.request) {
-      console.error('No response received');
-      alert("Cannot connect to server. Please check if backend is running.");
-    } else {
-      console.error('Error:', error.message);
-      alert("An unexpected error occurred");
-    }
-  } finally {
-    setSaving(false);
-  }
-};
-  const getConfidenceColor = (confidence) => {
-    const num = parseFloat(confidence);
-    if (num >= 70) return styles.highConfidence;
-    if (num >= 40) return styles.mediumConfidence;
-    return styles.lowConfidence;
-  };
-
-  const getConfidenceText = (confidence) => {
-    const num = parseFloat(confidence);
-    if (num >= 70) return "High Probability";
-    if (num >= 40) return "Medium Probability";
-    return "Low Probability";
-  };
-
-  const formatDate = () => {
-    return new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const styles = {
-    container: {
-      maxWidth: "800px",
-      margin: "40px auto",
-      padding: "20px"
-    },
-    header: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "30px"
-    },
-    title: {
-      fontSize: "28px",
-      color: "#333",
-      margin: 0
-    },
-    date: {
-      color: "#6c757d",
-      fontSize: "14px"
-    },
-    summaryCard: {
-      backgroundColor: "#f8f9fa",
-      borderRadius: "12px",
-      padding: "20px",
-      marginBottom: "30px",
-      border: "1px solid #e9ecef"
-    },
-    summaryTitle: {
-      fontSize: "18px",
-      color: "#495057",
-      marginTop: 0,
-      marginBottom: "15px"
-    },
-    symptomsContainer: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "10px",
-      marginBottom: "20px"
-    },
-    symptomTag: {
-      backgroundColor: "#e7f3ff",
-      color: "#0066cc",
-      padding: "8px 16px",
-      borderRadius: "20px",
-      fontSize: "14px",
-      fontWeight: "500"
-    },
-    userDataGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-      gap: "15px",
-      marginTop: "15px",
-      padding: "15px",
-      backgroundColor: "white",
-      borderRadius: "8px",
-      border: "1px solid #dee2e6"
-    },
-    userDataItem: {
-      display: "flex",
-      flexDirection: "column" 
-    },
-    userDataLabel: {
-      fontSize: "12px",
-      color: "#6c757d",
-      marginBottom: "4px"
-    },
-    userDataValue: {
-      fontSize: "18px",
-      fontWeight: "600",
-      color: "#333"
-    },
-    predictionsList: {
-      marginBottom: "30px"
-    },
-    predictionCard: {
-      backgroundColor: "white",
-      borderRadius: "12px",
-      padding: "20px",
-      marginBottom: "15px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-      border: "1px solid #e9ecef",
-      transition: "transform 0.2s, box-shadow 0.2s"
-    },
-    predictionHeader: {
-      display: "flex",
-      alignItems: "center",
-      marginBottom: "15px"
-    },
-    rankBadge: {
-      width: "40px",
-      height: "40px",
-      borderRadius: "50%",
-      backgroundColor: "#007bff",
-      color: "white",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontWeight: "bold",
-      fontSize: "18px",
-      marginRight: "15px"
-    },
-    diseaseName: {
-      fontSize: "20px",
-      fontWeight: "600",
-      color: "#333",
-      margin: 0,
-      flex: 1
-    },
-    confidenceContainer: {
-      marginBottom: "10px"
-    },
-    confidenceLabel: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: "5px",
-      fontSize: "14px",
-      color: "#6c757d"
-    },
-    confidenceBar: {
-      width: "100%",
-      height: "24px",
-      backgroundColor: "#e9ecef",
-      borderRadius: "12px",
-      overflow: "hidden",
-      position: "relative"
-    },
-    confidenceFill: {
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      paddingRight: "10px",
-      color: "white",
-      fontSize: "12px",
-      fontWeight: "bold",
-      transition: "width 0.3s ease"
-    },
-    confidenceText: {
-      marginTop: "5px",
-      fontSize: "13px",
-      fontWeight: "500"
-    },
-    highConfidence: {
-      backgroundColor: "#28a745"
-    },
-    mediumConfidence: {
-      backgroundColor: "#ffc107",
-      color: "#333"
-    },
-    lowConfidence: {
-      backgroundColor: "#dc3545"
-    },
-    disclaimerCard: {
-      backgroundColor: "#fff3cd",
-      border: "1px solid #ffeeba",
-      borderRadius: "12px",
-      padding: "20px",
-      marginBottom: "30px"
-    },
-    disclaimerTitle: {
-      color: "#856404",
-      fontSize: "16px",
-      fontWeight: "600",
-      marginTop: 0,
-      marginBottom: "10px"
-    },
-    disclaimerText: {
-      color: "#856404",
-      fontSize: "14px",
-      margin: 0,
-      lineHeight: "1.6"
-    },
-    actionButtons: {
-      display: "flex",
-      gap: "15px",
-      justifyContent: "center",
-      flexWrap: "wrap"
-    },
-    primaryButton: {
-      padding: "12px 30px",
-      backgroundColor: "#007bff",
-      color: "white",
-      border: "none",
-      borderRadius: "8px",
-      fontSize: "16px",
-      fontWeight: "500",
-      cursor: "pointer",
-      transition: "background-color 0.2s"
-    },
-    secondaryButton: {
-      padding: "12px 30px",
-      backgroundColor: "#6c757d",
-      color: "white",
-      border: "none",
-      borderRadius: "8px",
-      fontSize: "16px",
-      fontWeight: "500",
-      cursor: "pointer",
-      transition: "background-color 0.2s"
-    },
-    saveButton: {
-      padding: "12px 30px",
-      backgroundColor: "#28a745",
-      color: "white",
-      border: "none",
-      borderRadius: "8px",
-      fontSize: "16px",
-      fontWeight: "500",
-      cursor: "pointer",
-      transition: "background-color 0.2s"
-    },
-    savedMessage: {
-      textAlign: "center",
-      color: "#28a745",
-      marginTop: "10px",
-      fontSize: "14px"
-    },
-    errorCard: {
-      textAlign: "center",
-      padding: "40px",
-      backgroundColor: "#f8f9fa",
-      borderRadius: "12px",
-      border: "1px solid #dee2e6"
-    },
-    errorTitle: {
-      color: "#dc3545",
-      marginBottom: "15px"
-    },
-    errorMessage: {
-      color: "#6c757d",
-      marginBottom: "20px"
-    }
+    container: { maxWidth: "800px", margin: "30px auto", padding: "20px", fontFamily: "Arial, sans-serif", color: "#333" },
+    card: { backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)", padding: "25px", marginBottom: "20px" },
+    title: { fontSize: "24px", color: "#2c3e50", marginBottom: "20px", borderBottom: "2px solid #eee", pb: "10px" },
+    predictionBox: { padding: "15px", borderRadius: "8px", backgroundColor: "#f8f9fa", marginBottom: "15px", borderLeft: "5px solid #007bff" },
+    diseaseName: { fontSize: "20px", fontWeight: "bold", color: "#007bff" },
+    confidence: { fontSize: "16px", color: "#666", marginTop: "5px" },
+    table: { width: "100%", borderCollapse: "collapse", marginTop: "15px" },
+    th: { textAlign: "left", padding: "12px", backgroundColor: "#f1f3f5", borderBottom: "2px solid #dee2e6", fontSize: "14px" },
+    td: { padding: "12px", borderBottom: "1px solid #eee", fontSize: "14px", color: "#444" },
+    badge: { display: "inline-block", padding: "4px 12px", borderRadius: "20px", backgroundColor: "#e7f3ff", color: "#0066cc", fontSize: "12px", marginRight: "5px", marginBottom: "5px" },
+    button: { padding: "12px 25px", backgroundColor: "#6c757d", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "16px" }
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Prediction Results</h1>
-        <span style={styles.date}>{formatDate()}</span>
+      <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Analysis Results</h1>
+
+      {/* 1. TOP PREDICTION */}
+      <div style={styles.card}>
+        <h2 style={styles.title}>Top Prediction</h2>
+        <div style={styles.predictionBox}>
+          <div style={styles.diseaseName}>{predictions[0]?.disease}</div>
+          <div style={styles.confidence}>Confidence Level: {predictions[0]?.confidence}</div>
+        </div>
+        <p style={{ fontSize: "14px", color: "#666", fontStyle: "italic" }}>
+          *Note: This is an AI-generated assessment. Please consult a doctor for official diagnosis.
+        </p>
       </div>
 
-      {/* Summary Section */}
-      <div style={styles.summaryCard}>
-        <h3 style={styles.summaryTitle}>Analysis Summary</h3>
-        
-        {/* Symptoms */}
-        <div style={styles.symptomsContainer}>
-          {symptoms.map((symptom, index) => (
-            <span key={index} style={styles.symptomTag}>
-              {symptom}
-            </span>
-          ))}
+      {/* 2. PATIENT INFO & SYMPTOMS */}
+      <div style={styles.card}>
+        <h2 style={styles.title}>Input Summary</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "20px" }}>
+          <div><strong>Age:</strong> {userData?.age}</div>
+          <div><strong>BP:</strong> {userData?.bp}</div>
+          {userData?.temperature && <div><strong>Temp:</strong> {userData?.temperature}°F</div>}
         </div>
 
-        {/* User Data */}
-        {userData && (
-          <div style={styles.userDataGrid}>
-            <div style={styles.userDataItem}>
-              <span style={styles.userDataLabel}>Age</span>
-              <span style={styles.userDataValue}>{userData.age} years</span>
-            </div>
-            <div style={styles.userDataItem}>
-              <span style={styles.userDataLabel}>Temperature</span>
-              <span style={styles.userDataValue}>{userData.temperature}°F</span>
-            </div>
-            <div style={styles.userDataItem}>
-              <span style={styles.userDataLabel}>Blood Pressure</span>
-              <span style={styles.userDataValue}>{userData.bp}</span>
+        {predictionType === "symptoms" && symptoms?.length > 0 && (
+          <div>
+            <strong>Reported Symptoms:</strong>
+            <div style={{ marginTop: "10px" }}>
+              {symptoms.map((s, i) => (
+                <span key={i} style={styles.badge}>{s}</span>
+              ))}
             </div>
           </div>
         )}
       </div>
 
-      {/* Predictions List */}
-      <div style={styles.predictionsList}>
-        <h3 style={styles.summaryTitle}>Top Possible Conditions</h3>
-        {predictions.map((pred, index) => (
-          <div 
-            key={index} 
-            style={styles.predictionCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-            }}
-          >
-            <div style={styles.predictionHeader}>
-              <span style={styles.rankBadge}>#{index + 1}</span>
-              <h4 style={styles.diseaseName}>{pred.disease}</h4>
-            </div>
-
-            <div style={styles.confidenceContainer}>
-              <div style={styles.confidenceLabel}>
-                <span>Confidence Level</span>
-                <span style={{ fontWeight: "bold" }}>{pred.confidence}</span>
-              </div>
-              <div style={styles.confidenceBar}>
-                <div 
-                  style={{
-                    ...styles.confidenceFill,
-                    ...getConfidenceColor(pred.confidence),
-                    width: pred.confidence
-                  }}
-                >
-                  {parseFloat(pred.confidence) >= 60 && pred.confidence}
-                </div>
-              </div>
-              <div style={styles.confidenceText}>
-                {getConfidenceText(pred.confidence)}
-              </div>
-            </div>
+      {/* 3. BLOOD REPORT DATA (Only shows if type is report) */}
+      {predictionType === "report" && reportData && (
+        <div style={styles.card}>
+          <h2 style={styles.title}>Blood Parameter Details</h2>
+          <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <style>{`tr:hover { background-color: #f8f9fa; }`}</style>
+                  <th style={styles.th}>Parameter</th>
+                  <th style={styles.th}>Your Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(reportData).map(([key, value]) => (
+                  <tr key={key}>
+                    <td style={styles.td}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</td>
+                    <td style={{ ...styles.td, fontWeight: "bold" }}>{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
-
-      {/* Medical Disclaimer */}
-      <div style={styles.disclaimerCard}>
-        <h4 style={styles.disclaimerTitle}>⚠️ Important Medical Disclaimer</h4>
-        <p style={styles.disclaimerText}>
-          This prediction is generated by an AI model and should not be considered 
-          as professional medical advice. The results are for informational purposes 
-          only. Always consult with a qualified healthcare provider for proper 
-          diagnosis and treatment.
-        </p>
-      </div>
-
-      {/* Action Buttons */}
-      <div style={styles.actionButtons}>
-        <button 
-          onClick={handleSaveToHistory}
-          style={styles.saveButton}
-          disabled={saving || saved}
-        >
-          {saving ? "Saving..." : saved ? "✓ Saved!" : "Save to History"}
-        </button>
-        
-        <button 
-          onClick={() => navigate("/health-form")} 
-          style={styles.primaryButton}
-        >
-          New Prediction
-        </button>
-        
-        <button 
-          onClick={() => navigate("/dashboard")} 
-          style={styles.secondaryButton}
-        >
-          Back to Dashboard
-        </button>
-      </div>
-
-      {saved && (
-        <div style={styles.savedMessage}>
-          ✓ Successfully saved to your history!
         </div>
       )}
+
+      {/* 4. OTHER POTENTIAL CONDITIONS */}
+      {predictions.length > 1 && (
+        <div style={styles.card}>
+          <h2 style={styles.title}>Other Possibilities</h2>
+          {predictions.slice(1).map((p, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eee" }}>
+              <span>{p.disease}</span>
+              <span style={{ color: "#666" }}>{p.confidence}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ textAlign: "center", marginTop: "30px", marginBottom: "50px" }}>
+        <button style={styles.button} onClick={() => navigate("/health-form")}>
+          Perform New Analysis
+        </button>
+      </div>
     </div>
   );
 };
