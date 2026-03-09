@@ -36,21 +36,28 @@ api.interceptors.response.use(
     }
 );
 
-// ============ ML SERVICE API (for symptoms list) ============
+// ============ ML SERVICE API (Status & Initialization) ============
 export const checkMLHealth = async () => {
-    const response = await api.get('/ml/health');
-    return response.data;
+    // Matches router.get("/health", checkHealth) in predictionRoutes.js
+    try {
+        const response = await api.get('/predictions/health');
+        return response.data;
+    } catch (error) {
+            // If the request fails, return offline so the UI can show the error
+            return { status: "offline" };
+        }
 };
 
 export const getSymptoms = async () => {
-    const response = await api.get('/ml/symptoms');
+    // Matches router.get("/symptoms", getSymptomsList) in predictionRoutes.js
+    const response = await api.get('/predictions/symptoms');
     return response.data;
 };
 
-// ============ PREDICTION API (for making predictions) ============
+// ============ PREDICTION API (Submitting Data) ============
 export const predictDisease = async (symptoms, userData = {}) => {
-    // This calls the CORRECT endpoint: /api/predict/symptoms
-    const response = await api.post('/predict/symptoms', {
+    // Matches router.post("/symptoms", protect, predictSymptoms)
+    const response = await api.post('/predictions/symptoms', {
         symptoms,
         age: userData.age,
         temperature: userData.temperature,
@@ -59,19 +66,32 @@ export const predictDisease = async (symptoms, userData = {}) => {
     return response.data;
 };
 
-// ============ HISTORY API ============
+export const predictByReport = async (reportData, userData = {}) => {
+    // Matches router.post("/report", protect, predictReport)
+    const response = await api.post('/predictions/report', {
+        report_data: reportData,
+        age: userData.age,
+        bp: userData.bp
+    });
+    return response.data;
+};
+
+// ============ HISTORY API (Managing Records) ============
 export const getHistory = async () => {
-    const response = await api.get('/predict/history');
+    // Matches router.get("/history", protect, getHistory)
+    const response = await api.get('/predictions/history');
     return response.data;
 };
 
 export const getPredictionRecord = async (id) => {
-    const response = await api.get(`/predict/${id}`);
+    // Matches router.get("/:id", protect, getRecord)
+    const response = await api.get(`/predictions/${id}`);
     return response.data;
 };
 
 export const deletePredictionRecord = async (id) => {
-    const response = await api.delete(`/predict/${id}`);
+    // Matches router.delete("/:id", protect, deleteRecord)
+    const response = await api.delete(`/predictions/${id}`);
     return response.data;
 };
 
